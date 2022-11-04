@@ -106,6 +106,13 @@ app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async (req, res)
     res.redirect(`/campgrounds/${campground._id}`); // F IMPORATNTE SLASH-URILE ASTEA IN PATH-URI!!!!
 }))
 
+app.delete('/campgrounds/:id/reviews/:reviewID', catchAsync( async(req, res) => {
+    const { id, reviewId } = req.params;
+    await Campground.findByIdAndUpdate(id, {$pull: {reviews: reviewId} });
+    await Review.findByIdAndDelete(reviewId);
+    res.redirect(`/campgrounds/${id}`);
+}))
+
 app.all('*', (req, res, next) => {   // runs for every single request (DAR CAREFUL: will run only if nothing else has matched first and we didn't respond from any of them!! (top-to-bottom))
     next(new ExpressError('Page Not Found', 404))
 })
