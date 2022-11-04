@@ -16,7 +16,7 @@ const CampgroundSchema = new Schema({
     ]
 });
 
-CampgroundSchema.post('findOneAndDelete', async function (doc) {
+CampgroundSchema.post('findOneAndDelete', async function (doc) {  // this is a query middleware!! And it's going to pass in the deleted doc!!
     console.log(`DELETED:\n${doc}`);
     if(doc){
         await Review.deleteMany({_id: {$in: doc.reviews}})
