@@ -2,17 +2,20 @@ const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
 const ejsMate = require('ejs-mate');
-const { campgroundSchema, reviewSchema } = require('./schemas');
-const catchAsync = require('./utils/catchAsync');
+const session = require('express-session');
+const flash = require('connect-flash');
 const ExpressError = require('./utils/ExpressError');
 const methodOverride = require('method-override');
-const Campground = require('./models/campground');
-const Review = require('./models/review');
+
+
+const campgrounds = require('./routes/campgrounds');
+const reviews = require('./routes/reviews');
 
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {
     useNewUrlParser: true,
     // useCreateIndex: true,  // deprecated
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    // useFindAndModify: false // cica nu mai trebuie asta (si poate chiar nici cele de above!!)
 })
 
 const db = mongoose.connection;
@@ -29,89 +32,29 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-
-// app.use(asdasd, asdasd) // NU! We don't wnat this to be run for each of our routes! We want this to be selectively applied!
-const validateCampground = (req, res, next) => {
-    console.log('intraaaa!!!')
-    const { error } = campgroundSchema.validate(req.body);
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ')
-        throw new ExpressError(msg, 400)
+const sessionConfig = {
+    secret: 'thisshouldbeabettersecret!',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        httpOnly: true,  // might be the default these days..
+        expires: Date.now() + 1000 * 60 * 60 * 24 * 7,  // expire over a week
+        maxAge: 1000 * 60 * 60 * 24 * 7 
     }
-    next(); // never forget this in a middleware!!
 }
-const validateReview = (req, res, next) => {
-    const { error } = reviewSchema.validate(req.body);
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ')
-        throw new ExpressError(msg, 400)
-    }
-    next(); // never forget this in a middleware!!
-}
+app.use(session(sessionConfig))
+app.use(flash());
 
-app.get('/', (req, res) => {
-    res.render('home')
-})
-app.get('/campgrounds', catchAsync(async (req, res) => {
-    const campgrounds = await Campground.find({});
-    res.render('campgrounds/index', { campgrounds });
-}))
-app.get('/campgrounds/new', (req, res) => {  // asta dc nu e async? ori va fi..?
-    res.render('campgrounds/new');
+app.use((req, res, next) => {
+    res.locals.success = req.flash('success');  // whatever res.locals is, we'll have access to it in our templates automatically!! we don't have to pass it through!!
+    res.locals.error = req.flash('error');  // whatever res.locals is, we'll have access to it in our templates automatically!! we don't have to pass it through!!
+    next();
 })
 
-app.post('/campgrounds', validateCampground, catchAsync(async (req, res, next) => {
-    // console.log('intra unde trebuie POST!')
-
-    // if (!req.body.campground) throw new ExpressError('Invalid Campground Data', 400);
-    const campground = new Campground (req.body.campground);
-    await campground.save();
-     res.redirect(`/campgrounds/${campground._id}`);
-}))
-
-app.get('/campgrounds/:id', catchAsync(async (req, res) => {
-    // const campground = await Campground.findById(req.params.id);
-    const campground = await Campground.findById(req.params.id).populate('reviews');
-    // console.log(campground);  // just to see what we are dealing with
-    res.render('campgrounds/show', { campground} );
-}))
-
-
-app.get('/campgrounds/:id/edit', catchAsync(async (req, res) => {
-    const campground = await Campground.findById(req.params.id);
-    res.render('campgrounds/edit', { campground });
-}))
-
-app.put('/campgrounds/:id', validateCampground, catchAsync( async(req, res) => {  // mare atentie la chestii de genul!! Nuj dc fara primul slash nu o sa mearga!! Desi eroarea zice clar ca a interpertat cu "/" chit ca eu nu am pus "/"!!
-    const { id } = req.params;
-    const campground = await Campground.findByIdAndUpdate(id, { ...req.body.campground }); // la fel de bine mergea si req.body.campground direct fara destructuring + capturing in a new object!!
-    res.redirect(`/campgrounds/${campground._id}`);
-}))
-
-app.delete('/campgrounds/:id', catchAsync( async (req, res) => {
-    const { id } = req.params;
-    await Campground.findByIdAndDelete(id);
-    res.redirect('/campgrounds');
-}))
-
-app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async (req, res) => {
-    const campground = await Campground.findById(req.params.id);
-    const review = new Review(req.body.review); // remember how we structured the request body in show.ejs!! (doing stuff like: review[rating], review[body])
-    campground.reviews.push(review); 
-    await review.save();
-    await campground.save();
-    // res.send('YOU MADE IT!!');
-    // res.redirect(`campgrounds/${campground._id}`);
-    res.redirect(`/campgrounds/${campground._id}`); // F IMPORATNTE SLASH-URILE ASTEA IN PATH-URI!!!!
-}))
-
-app.delete('/campgrounds/:id/reviews/:reviewID', catchAsync( async(req, res) => {
-    const { id, reviewId } = req.params;
-    await Campground.findByIdAndUpdate(id, {$pull: {reviews: reviewId} });
-    await Review.findByIdAndDelete(reviewId);
-    res.redirect(`/campgrounds/${id}`);
-}))
+app.use('/campgrounds', campgrounds);
+app.use('/campgrounds/:id/reviews', reviews);
 
 app.all('*', (req, res, next) => {   // runs for every single request (DAR CAREFUL: will run only if nothing else has matched first and we didn't respond from any of them!! (top-to-bottom))
     next(new ExpressError('Page Not Found', 404))
