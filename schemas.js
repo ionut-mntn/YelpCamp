@@ -7,8 +7,8 @@ module.exports.campgroundSchema = Joi.object({
         // image: Joi.string().required(),
         location: Joi.string().required(),
         description: Joi.string().required()
-    }).required() // just saying object is not the same as saying it is required!!
-
+    }).required(), // just saying object is not the same as saying it is required!!
+    deleteImages: Joi.array()
 })
 
 module.exports.reviewSchema = Joi.object({
