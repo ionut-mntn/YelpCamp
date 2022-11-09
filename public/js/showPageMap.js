@@ -4,8 +4,10 @@ const map = new mapboxgl.Map({  // unde am definit asta??
     style: 'mapbox://styles/mapbox/streets-v11',
     // style: 'mapbox://styles/mapbox/light-v10',
     center: campground.geometry.coordinates,
-    zoom: 9
+    zoom: 10  // starting zoom
 })
+
+map.addControl(new mapboxgl.NavigationControl());
 
 new mapboxgl.Marker()
     .setLngLat(campground.geometry.coordinates)

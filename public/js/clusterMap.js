@@ -1,12 +1,14 @@
 mapboxgl.accessToken = mapToken;
 // mapboxgl.accessToken = 'pk.eyJ1IjoiaW9udXQtbW50biIsImEiOiJjbGE4YXFhdDUwMXg0M3FtbzcxeHJoNmI0In0.RGyKbAje2Etmy_zv1OJNjA';
 const map = new mapboxgl.Map({
-    container: 'map',
+    container: 'cluster-map',
     // style: 'mapbox://styles/mapbox/light-v10',
     style: 'mapbox://styles/mapbox/dark-v10',
     center: [-103.59179687498357, 40.66995747013945],
     zoom: 3
 });
+
+map.addControl(new mapboxgl.NavigationControl());
 
 map.on('load', function () {
     // Add a new source from our GeoJSON data and
