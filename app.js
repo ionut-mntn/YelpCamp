@@ -67,7 +67,10 @@ app.use(session(sessionConfig))
 app.use(flash());
 // app.use(helmet({ contentSecurityPolicy: false }));  // automatically enables all (11) middleware that helmet comes with!!
 // app.use(helmet({ crossOriginEmbedderPolicy: false }));  // automatically enables all (11) middleware that helmet comes with!!
-// app.use(helmet());
+app.use(helmet());
+// app.use(helmet({
+//     crossOriginEmbedderPolicy: false
+// }));  // automatically enables all (11) middleware that helmet comes with!!
 
 const scriptSrcUrls = [
     "https://stackpath.bootstrapcdn.com/",
@@ -93,6 +96,7 @@ const connectSrcUrls = [
 ];
 const fontSrcUrls = [];
 app.use(
+    // crossOriginEmbedderPolicy: false,
     helmet.contentSecurityPolicy({
         directives: {
             defaultSrc: [],
@@ -108,9 +112,10 @@ app.use(
                 "https://res.cloudinary.com/dejwjwoqc/", //SHOULD MATCH YOUR CLOUDINARY ACCOUNT! 
                 "https://images.unsplash.com/",
             ],
-            fontSrc: ["'self'", ...fontSrcUrls],
-            mediaSrc: ["https://res.cloudinary.com/dejwjwoqc/"],
-            childSrc: ["blob:"]
+            fontSrc: ["'self'", ...fontSrcUrls]
+            // ,
+            // mediaSrc: ["https://res.cloudinary.com/dejwjwoqc/"],
+            // childSrc: ["blob:"]
         },
         // crossOriginEmbedderPolicy: false
     })
@@ -135,6 +140,10 @@ app.use((req, res, next) => {
 app.use('/', userRoutes);
 app.use('/campgrounds', campgroundRoutes);
 app.use('/campgrounds/:id/reviews', reviewRoutes);
+
+app.get('/', (req, res) => {
+    res.render('home')
+});
 
 app.all('*', (req, res, next) => {   // runs for every single request (DAR CAREFUL: will run only if nothing else has matched first and we didn't respond from any of them!! (top-to-bottom))
     next(new ExpressError('Page Not Found', 404))

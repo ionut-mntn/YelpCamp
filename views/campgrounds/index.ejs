@@ -9,11 +9,12 @@
                     <div class="col-md-4">
                         <!-- <img class="img-fluid" alt="" src="<%=campground.image%>"> -->
                         <% if(campground.images.length) {%>
-                            <img class="img-fluid" alt="" src="<%=campground.images[0].url%>">
+                            <img class="img-fluid" alt="" src="<%=campground.images[0].url%>" crossorigin>
                             <% } else {%>
                                 <!-- <img class="img-fluid" alt="" crossorigin="anonymous" -->
                                 <img class="img-fluid" alt=""
-                                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTj7DNn7JwVNgpQNsZrP-E5FlN0s3O32cCwQoSOqY-kTQ&s">
+                                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTj7DNn7JwVNgpQNsZrP-E5FlN0s3O32cCwQoSOqY-kTQ&s"
+                                    crossorigin>
                                 <% } %>
                     </div>
                     <div class="col-md-8">
